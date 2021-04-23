@@ -1,7 +1,6 @@
-from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button
+from tkinter import Tk, Frame, Scrollbar, Label, END, Entry, Text, VERTICAL, Button, StringVar, W, Toplevel, Listbox
 import socket
 import threading
-from tkinter import *
 from tkinter import messagebox as ms
 import sqlite3
 class GUI:
@@ -19,59 +18,51 @@ class GUI:
         self.password = StringVar()
         self.n_username = StringVar()
         self.n_password = StringVar()
-        #Create Widgets
+        self.initialize_socket()
+        #Create Widgets (Login, Register)
         self.widgets()
         
 
     def initialize_socket(self):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         remote_ip = '127.0.0.1'
-        remote_port = 10319
+        remote_port = 33000
         self.client_socket.connect((remote_ip, remote_port))
 
     def initialize_gui(self):
-        self.root.title("Socket Chat")
+        self.root.title("Socket Soccer")
         self.root.resizable(0, 0)
-        self.display_chat_box()
-        self.display_name_section()
-        self.display_chat_entry_box()
+        self.display_command_box()
+        self.display_command_entry_box()
 
     
 
-    def listen_for_incoming_messages_in_a_thread(self):
-        thread = threading.Thread(target=self.receive_message_from_server, args=(self.client_socket,))
-        thread.start()
+    # def listen_for_incoming_messages_in_a_thread(self):
+    #     thread = threading.Thread(target=self.receive_message_from_server, args=(self.client_socket,))
+    #     thread.start()
 
-    def receive_message_from_server(self, so):
-        while True:
-            buffer = so.recv(256)
-            if not buffer:
-                break
-            message = buffer.decode('utf-8')
-            # self.chat_transcript_area.insert('end', message + '\n')
-            # self.chat_transcript_area.yview(END)
-            if "joined" in message:
-                user = message.split(":")[1]
-                message = user + " has joined"
-                self.chat_transcript_area.insert('end', message + '\n')
-                self.chat_transcript_area.yview(END)
-            else:
-                self.chat_transcript_area.insert('end', message + '\n')
-                self.chat_transcript_area.yview(END)
+    # def receive_message_from_server(self, so):
+    #     while True:
+    #         buffer = so.recv(256)
+    #         if not buffer:
+    #             break
+    #         message = buffer.decode('utf-8')
+    #         # self.chat_transcript_area.insert('end', message + '\n')
+    #         # self.chat_transcript_area.yview(END)
+    #         if "joined" in message:
+    #             user = message.split(":")[1]
+    #             message = user + " has joined"
+    #             self.chat_transcript_area.insert('end', message + '\n')
+    #             self.chat_transcript_area.yview(END)
+    #         else:
+    #             self.chat_transcript_area.insert('end', message + '\n')
+    #             self.chat_transcript_area.yview(END)
 
-        so.close()
+    #     so.close()
 
-    def display_name_section(self):
+    def display_command_box(self):
         frame = Frame()
-        Label(frame, text='Enter your name:', font=("Helvetica", 16)).pack(side='left', padx=10)
-        self.name_widget = Entry(frame, width=50, borderwidth=2)
-        self.name_widget.pack(side='left', anchor='e')
-        self.join_button = Button(frame, text="Join", width=10, command=self.on_join).pack(side='left')
-        frame.pack(side='top', anchor='nw')
-
-    def display_chat_box(self):
-        frame = Frame()
-        Label(frame, text='Chat Box:', font=("Serif", 12)).pack(side='top', anchor='w')
+        Label(frame, text='Command Box:', font=("Serif", 12)).pack(side='top', anchor='w')
         self.chat_transcript_area = Text(frame, width=60, height=10, font=("Serif", 12))
         scrollbar = Scrollbar(frame, command=self.chat_transcript_area.yview, orient=VERTICAL)
         self.chat_transcript_area.config(yscrollcommand=scrollbar.set)
@@ -80,89 +71,97 @@ class GUI:
         scrollbar.pack(side='right', fill='y')
         frame.pack(side='top')
 
-    def display_chat_entry_box(self):
+    def display_command_entry_box(self):
         frame = Frame()
-        Label(frame, text='Enter message:', font=("Serif", 12)).pack(side='top', anchor='w')
-        self.enter_text_widget = Text(frame, width=60, height=3, font=("Serif", 12))
-        self.enter_text_widget.pack(side='left', pady=15)
-        self.enter_text_widget.bind('<Return>', self.on_enter_key_pressed)
+        Label(frame, text='Enter command:', font=("Serif", 12)).pack(side='top', anchor='w')
+        self.enter_text_widget = Text(frame, width=60, height=1, font=("Serif", 12))
+        self.enter_text_widget.pack(side='left', pady=5)
+        self.enter_text_widget.bind('<Return>', self.send)
         frame.pack(side='top')
 
-    def on_join(self):
-        if len(self.name_widget.get()) == 0:
-            ms.showerror(
-                "Enter your name", "Enter your name to send a message")
-            return
-        self.name_widget.config(state='disabled')
-        self.client_socket.send(("joined:" + self.name_widget.get()).encode('utf-8'))
-
-    def on_enter_key_pressed(self, event):
-        if len(self.name_widget.get()) == 0:
-            ms.showerror(
-                "Enter your name", "Enter your name to send a message")
-            return
-        self.send_chat()
-        self.clear_text()
-
-    def clear_text(self):
+    def clear_text(self): # To remove text, avoid duplicate in chat box
         self.enter_text_widget.delete(1.0, 'end')
 
-    def send_chat(self):
-        senders_name = self.name_widget.get().strip() + ": "
+    def send(self, event):
+        senders_name = self.username.get().strip() + ": " # strip() = print
         data = self.enter_text_widget.get(1.0, 'end').strip()
         message = (senders_name + data).encode('utf-8')
-        self.chat_transcript_area.insert('end', message.decode('utf-8') + '\n')
+        self.chat_transcript_area.insert('end', message.decode('utf-8') + '\n') #To see text in chat box
         self.chat_transcript_area.yview(END)
         self.client_socket.send(message)
-        self.enter_text_widget.delete(1.0, 'end')
-        return 'break'
+        self.clear_text()
+        
+        if data == "/help":
+            self.client_socket.sendall(bytes("/help", "utf8"))
+            msg = self.client_socket.recv(1024)
+            self.chat_transcript_area.insert('end', msg.decode('utf-8') + '\n')
+            self.chat_transcript_area.yview(END)
+        if data == "/quit":
+            self.client_socket.sendall(bytes("/quit", "utf8"))                 
+        if data == "/list all":
+            self.client_socket.sendall(bytes("/list all", "utf8"))
+            self.print_list()
+        if data == "/score":
+            #self.client_socket.sendall(bytes("/score", "utf8"))
+
+            top = Toplevel()
+            top.title("Score")
+            self.scrollbar = Scrollbar(top)
+            self.list_box = Listbox(top, height=30, width=55, yscrollcommand = self.scrollbar.set)
+            self.scrollbar.grid(row=0,column=5,ipady=90)
+            self.list_box.grid(row=0,column=0,columnspan=4)
+
+            # entry_field = Entry(top)
+            # #entry_field.bind("<Return>", send)
+            # entry_field.grid(row=1,column=0,columnspan=4)
+            # send_button = Button(top, text="Send",command=lambda :city(entry_field.get(),msg_list,top1))
+            # send_button.grid(row=2,column=1)
+
+            # quit_button= Button(top1,text="Quit",command=top1.destroy)
+            # quit_button.grid(row=2,column=2)
+            # entry_field.grid(row=1,column=0,columnspan=4)
+            # send_button = Button(top1, text="Send",command=lambda :city(entry_field.get(),msg_list,top1))
+            # send_button.grid(row=2,column=1)
+
+            # quit_button= Button(top1,text="Quit",command=top1.destroy)
+            # quit_button.grid(row=2,column=2)
 
     def on_close_window(self):
         if ms.askokcancel("Quit", "Do you want to quit?"):
+            self.client_socket.sendall(bytes("/quit", "utf8"))
             self.root.destroy()
             self.client_socket.close()
             exit(0)
 
     #Login Function
     def login(self):
-    	#Establish Connection
-        with sqlite3.connect('Accounts.db') as db:
-            c = db.cursor()
+        
+        self.client_socket.sendall(bytes("Login","utf8"))
+        self.client_socket.sendall(bytes(self.username.get() + ":" + self.password.get(), "utf8"))
+        msg = self.client_socket.recv(1024)
+        
+        data=msg.decode("utf8")
 
-        #Find user If there is any take proper action
-        find_user = ('SELECT * FROM user WHERE username = ? and password = ?')
-        c.execute(find_user,[(self.username.get()),(self.password.get())])
-        result = c.fetchall()
-        if result:
-            self.logf.pack_forget()
-            self.head['text'] = self.username.get() + '\n Loged In'
-            self.head['pady'] = 150
-            root.deiconify()
-            top.destroy()
-            self.initialize_socket()
+        if data=="Accept": 
+            self.logf.pack_forget()  #to remove previous UI login
+            self.head.pack_forget()
             self.initialize_gui()
-            self.listen_for_incoming_messages_in_a_thread() 
-        else:
-            ms.showerror('Oops!','Username Not Found.')
-            return
+        else:           
+            ms.showerror('Username Not Found!', 'Please login again.')            
             
     def new_user(self):
-    	#Establish Connection
-        with sqlite3.connect('Accounts.db') as db:
-            c = db.cursor()
+        self.client_socket.sendall(bytes("Register","utf8"))
+        self.client_socket.sendall(bytes(self.n_username.get()+ ":" + self.n_password.get(), "utf8"))
 
-        #Find Existing username if any take proper action
-        find_user = ('SELECT username FROM user WHERE username = ?')
-        c.execute(find_user,[(self.n_username.get())])        
-        if c.fetchall():
-            ms.showerror('Error!','Username Taken Try a Diffrent One.')
-        else:
+        msg = self.client_socket.recv(1024)
+
+        data = msg.decode("utf8")
+
+        if data == "Accept": 
             ms.showinfo('Success!','Account Created!')
             self.log()
-        #Create New Account 
-        insert = 'INSERT INTO user(username,password) VALUES(?,?)'
-        c.execute(insert,[(self.n_username.get()),(self.n_password.get())])
-        db.commit()
+        else:           
+            ms.showerror('Error!','Username Taken Try a Diffrent One.')    
 
         #Frame Packing Methords
     def log(self):
@@ -182,36 +181,41 @@ class GUI:
     def widgets(self):
         self.head = Label(self.root,text = 'LOGIN',font = ('',35),pady = 10)
         self.head.pack()
-        self.logf = Frame(self.root,padx =10,pady = 10)
+        self.logf = Frame(self.root,padx =10,pady = 10) #Login frame
         Label(self.logf,text = 'Username: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
         Entry(self.logf,textvariable = self.username,bd = 5,font = ('',15)).grid(row=0,column=1)
         Label(self.logf,text = 'Password: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
         Entry(self.logf,textvariable = self.password,bd = 5,font = ('',15),show = '*').grid(row=1,column=1)
-        Button(self.logf,text = ' Login ',bd = 3 ,font = ('',15),padx=5,pady=5,command=self.login).grid()
-        Button(self.logf,text = ' Register ',bd = 3 ,font = ('',15),padx=5,pady=5,command=self.cr).grid(row=2,column=1)
+        Button(self.logf,text = ' Login ',bd = 3 ,fg = 'blue', font = ('',15),padx=5,pady=5,command=self.login).grid()
+        Button(self.logf,text = ' Register ',bd = 3 ,fg = 'green', font = ('',15),padx=5,pady=5,command=self.cr).grid(row=2,column=1)
+        Button(self.logf,text = ' Exit ',bd = 3 ,fg = 'red', font = ('',15),padx=5,pady=5,command=self.on_close_window).grid(row=2,column=2)
         self.logf.pack()
         
-        self.crf = Frame(self.root,padx =10,pady = 10)
+        self.crf = Frame(self.root,padx =10,pady = 10) #Create account frame
         Label(self.crf,text = 'Username: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
         Entry(self.crf,textvariable = self.n_username,bd = 5,font = ('',15)).grid(row=0,column=1)
         Label(self.crf,text = 'Password: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
         Entry(self.crf,textvariable = self.n_password,bd = 5,font = ('',15),show = '*').grid(row=1,column=1)
-        Button(self.crf,text = 'Register',bd = 3 ,font = ('',15),padx=5,pady=5,command=self.new_user).grid()
-        Button(self.crf,text = 'Go to Login',bd = 3 ,font = ('',15),padx=5,pady=5,command=self.log).grid(row=2,column=1)
+        Button(self.crf,text = 'Register',bd = 3 ,fg = 'green',font = ('',15),padx=5,pady=5,command=self.new_user).grid()
+        Button(self.crf,text = 'Go to Login',bd = 3 ,fg = 'blue', font = ('',15),padx=5,pady=5,command=self.log).grid(row=2,column=1)
 
-# make database and users (if not exists already) table at programme start up
-with sqlite3.connect('Accounts.db') as db:
-    c = db.cursor()
+    def print_list(self):
+        data = ""
+        while True: 
+            msg = self.client_socket.recv(1024)
+            data_decode = msg.decode("utf8")
+            if data_decode == "END":
+                break
+            data += data_decode
 
-c.execute('CREATE TABLE IF NOT EXISTS user (username TEXT NOT NULL PRIMARY KEY,password TEX NOT NULL);')
-db.commit()
-db.close()
+        l = data.split("/")
+        
+        self.chat_transcript_area.insert('end', "Time    / Team1    / Score    / Team2\n")
+        for i in range(len(l)): 
+            self.chat_transcript_area.insert('end', l[i] + '\n')
 
 if __name__ == '__main__':
     root = Tk()
-    top = Toplevel()
-    top.title('Login Form')
-    top.geometry('400x350')
     gui = GUI(root)
     root.protocol("WM_DELETE_WINDOW", gui.on_close_window)
     root.mainloop()
