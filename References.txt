@@ -2,3 +2,4 @@ https://www.youtube.com/watch?v=I_URK0ojOC0&ab_channel=AllAboutCode
 https://www.youtube.com/watch?v=qwBZMUM9L_E&ab_channel=TheBlackBerryChannel
 https://www.youtube.com/watch?v=GEGklHN2wn4&ab_channel=ManjurulHoque
 https://stackoverflow.com/questions/46504770/python-how-to-force-users-to-log-into-a-socket-server-to-use-python-script
+https://github.com/dojafoja/GUI-python-server/blob/master/server.py

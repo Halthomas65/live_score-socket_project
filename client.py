@@ -3,6 +3,8 @@ import socket
 import threading
 from tkinter import messagebox as ms
 import sqlite3
+import time
+import tkinter.simpledialog as sd
 class GUI:
     client_socket = None
     last_received_message = None
@@ -18,17 +20,58 @@ class GUI:
         self.password = StringVar()
         self.n_username = StringVar()
         self.n_password = StringVar()
+        self.ipaddr = ''
+        self.port = ''
+        top = Frame()
+        Label(top, text="The ip address would be default and the port will be 33000 if you do not input the new ones", font=("Serif", 12), padx = 150, pady = 5).pack(side='right')
+        top.pack()
+        # self.top.title("Notification!")
+        # Label(self.top,text='The ip address would be default and the port will be 33000 if you do not input the new ones: ',font='Helvetica 10 bold').pack(side='left')
+        # start_button = Button(self.top,text='Okay',command = self.top.destroy)
+        # start_button.pack(side='left',padx=10)
+        self.getUserInput()
+        top.pack_forget()
+        # self.head = Label(self.root,text = 'IP AND PORT',font = ('',35),pady = 10)
+        # self.head.pack()
+        
+        # self.ipf = Frame(self.root,padx =10,pady = 10) 
+        # self.ipaddr.set('')
+        # Label(self.ipf,text = 'Enter IP address: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
+        # Entry(self.ipf,textvariable = self.ipaddr,bd = 5,font = ('',15)).grid(row=0,column=1)
+        # self.port = StringVar()
+        # Label(self.ipf,text = 'Enter PORT: ',font = ('',20),pady=10,padx=5).grid(sticky = W)
+        # Entry(self.ipf,textvariable = self.port,bd = 5,font = ('',15)).grid(row=1,column=1)
+        #self.ipf.pack()
+        
         self.initialize_socket()
+        
         #Create Widgets (Login, Register)
         self.widgets()
         
-
+    def getUserInput(self):
+        self.ipaddr = None
+        self.ipaddr = sd.askstring('User Input','Enter IP address')
+        if self.ipaddr:
+            pass
+        else:
+            self.ipaddr = '127.0.0.1'
+        
+        self.port = None
+        self.port = sd.askstring('User Input','Enter Port')
+        if self.port:
+            pass
+        else:
+            self.port = 33000
     def initialize_socket(self):
+        
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        remote_ip = '127.0.0.1'
-        remote_port = 33000
-        self.client_socket.connect((remote_ip, remote_port))
 
+        # remote_ip = '192.168.1.19'
+        # remote_port = 33000
+        
+        self.client_socket.connect((self.ipaddr, int(self.port)))
+  
+        #self.client_socket.connect((self.ipaddr.get(), remote_port))
     def initialize_gui(self):
         self.root.title("Socket Soccer")
         self.root.resizable(0, 0)
@@ -70,7 +113,7 @@ class GUI:
         self.chat_transcript_area.pack(side='left', padx=10)
         scrollbar.pack(side='right', fill='y')
         frame.pack(side='top')
-
+        
     def display_command_entry_box(self):
         frame = Frame()
         Label(frame, text='Enter command:', font=("Serif", 12)).pack(side='top', anchor='w')
@@ -97,34 +140,49 @@ class GUI:
             self.chat_transcript_area.insert('end', msg.decode('utf-8') + '\n')
             self.chat_transcript_area.yview(END)
         if data == "/quit":
-            self.client_socket.sendall(bytes("/quit", "utf8"))                 
+            self.client_socket.sendall(bytes("/quit", "utf8"))   
+            self.root.destroy()
+            self.client_socket.close()
+            exit(0)              
         if data == "/list all":
             self.client_socket.sendall(bytes("/list all", "utf8"))
             self.print_list()
         if data == "/score":
-            #self.client_socket.sendall(bytes("/score", "utf8"))
+            self.client_socket.sendall(bytes("/score", "utf8"))           
+            self.top = Toplevel()
+            self.top.title("Score")
+            self.scrollbar = Scrollbar(self.top)
+            self.list_box = Listbox(self.top, height = 30, width = 55, yscrollcommand = self.scrollbar.set)
+            self.scrollbar.grid(row = 0,column = 5,ipady = 90)
+            self.list_box.grid(row = 0,column = 0,columnspan = 4)
 
-            top = Toplevel()
-            top.title("Score")
-            self.scrollbar = Scrollbar(top)
-            self.list_box = Listbox(top, height=30, width=55, yscrollcommand = self.scrollbar.set)
-            self.scrollbar.grid(row=0,column=5,ipady=90)
-            self.list_box.grid(row=0,column=0,columnspan=4)
+            #msg = self.client_socket.recv(1024) #receive the data for the list box from server
+            data = ""
+            while True: 
+                msg = self.client_socket.recv(1024)
+                data_decode = msg.decode("utf8")
+                if data_decode == "END":
+                    break
+                data += data_decode
 
-            # entry_field = Entry(top)
-            # #entry_field.bind("<Return>", send)
-            # entry_field.grid(row=1,column=0,columnspan=4)
-            # send_button = Button(top, text="Send",command=lambda :city(entry_field.get(),msg_list,top1))
-            # send_button.grid(row=2,column=1)
+            l = data.split("/")
+            
+            self.list_box.insert('end', "ID    / Time    / Team1    / Score    / Team2    / Date\n")
+            for i in range(len(l)): 
+                self.list_box.insert('end', l[i] + '\n')
 
-            # quit_button= Button(top1,text="Quit",command=top1.destroy)
-            # quit_button.grid(row=2,column=2)
-            # entry_field.grid(row=1,column=0,columnspan=4)
-            # send_button = Button(top1, text="Send",command=lambda :city(entry_field.get(),msg_list,top1))
-            # send_button.grid(row=2,column=1)
+            #send the match's ID to server
+            self.entry_field = Entry(self.top) 
+            #self.entry_field.bind("<Return>", self.send_score)
+            self.entry_field.grid(row = 1, column = 0, columnspan = 4)
+            send_button = Button(self.top, text = "Send",command = self.send_score)
+            send_button.grid(row = 2, column = 1)
 
-            # quit_button= Button(top1,text="Quit",command=top1.destroy)
-            # quit_button.grid(row=2,column=2)
+            quit_button = Button(self.top, text = "Quit", command = self.top.destroy)
+            quit_button.grid(row = 2, column = 2)
+
+        if data == "/clear":
+            self.chat_transcript_area.delete(1.0,'end')
 
     def on_close_window(self):
         if ms.askokcancel("Quit", "Do you want to quit?"):
@@ -210,9 +268,33 @@ class GUI:
 
         l = data.split("/")
         
-        self.chat_transcript_area.insert('end', "Time    / Team1    / Score    / Team2\n")
+        self.chat_transcript_area.insert('end', "Time    / Team1    / Score    / Team2     / Date\n")
         for i in range(len(l)): 
             self.chat_transcript_area.insert('end', l[i] + '\n')
+
+    def send_score(self):
+        data = self.entry_field.get()
+        # self.client_socket.sendall(bytes("Match ID", "utf8"))
+        # time.sleep(0.2)
+        self.client_socket.sendall(bytes(str(data), "utf8"))
+        msg = self.client_socket.recv(1024)
+        
+        #get the detail of that match from server
+        data = ""
+        while True: 
+            msg = self.client_socket.recv(1024)
+            data_decode = msg.decode("utf8")
+            if data_decode == "END":
+                break
+            data += data_decode
+
+        l = data.split("/")
+            
+        self.chat_transcript_area.insert('end', "Time    / Team1    / Score | Yellow card | Red card    / Team2\n")
+        for i in range(len(l)): 
+            self.chat_transcript_area.insert('end', l[i] + '\n')
+
+        self.top.destroy()
 
 if __name__ == '__main__':
     root = Tk()
