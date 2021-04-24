@@ -120,8 +120,8 @@ class Server:
                     else:
                         self.client.sendall(bytes("Fail","utf8")) 
                 if str_data == "/help":
-                    self.client.sendall(bytes("Server: /list all : print all the information about the soccer match at current time. \n"+
-                    "/quit : exit the server", "utf8" ))
+                    self.client.sendall(bytes("Server: /list all : print all the information about the soccer match at current time. \n"
+                    +"/list all date: to list the match at the date input\n" +"/soccer: to view the detail of the match (imcomple)\n" +"/quit : exit the server", "utf8\n" + "/clear: clear all text in the box\n" ))
                 if str_data == "/quit":
                     self.list_box.insert('end', self.client_address[0] +':' +str(self.client_address[1]) + " has quit")
 
