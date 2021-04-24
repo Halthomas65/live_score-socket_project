@@ -25,24 +25,8 @@ class GUI:
         top = Frame()
         Label(top, text="The ip address would be default and the port will be 33000 if you do not input the new ones", font=("Serif", 12), padx = 150, pady = 5).pack(side='right')
         top.pack()
-        # self.top.title("Notification!")
-        # Label(self.top,text='The ip address would be default and the port will be 33000 if you do not input the new ones: ',font='Helvetica 10 bold').pack(side='left')
-        # start_button = Button(self.top,text='Okay',command = self.top.destroy)
-        # start_button.pack(side='left',padx=10)
         self.getUserInput()
         top.pack_forget()
-        # self.head = Label(self.root,text = 'IP AND PORT',font = ('',35),pady = 10)
-        # self.head.pack()
-        
-        # self.ipf = Frame(self.root,padx =10,pady = 10) 
-        # self.ipaddr.set('')
-        # Label(self.ipf,text = 'Enter IP address: ',font = ('',20),pady=5,padx=5).grid(sticky = W)
-        # Entry(self.ipf,textvariable = self.ipaddr,bd = 5,font = ('',15)).grid(row=0,column=1)
-        # self.port = StringVar()
-        # Label(self.ipf,text = 'Enter PORT: ',font = ('',20),pady=10,padx=5).grid(sticky = W)
-        # Entry(self.ipf,textvariable = self.port,bd = 5,font = ('',15)).grid(row=1,column=1)
-        #self.ipf.pack()
-        
         self.initialize_socket()
         
         #Create Widgets (Login, Register)
@@ -77,31 +61,6 @@ class GUI:
         self.root.resizable(0, 0)
         self.display_command_box()
         self.display_command_entry_box()
-
-    
-
-    # def listen_for_incoming_messages_in_a_thread(self):
-    #     thread = threading.Thread(target=self.receive_message_from_server, args=(self.client_socket,))
-    #     thread.start()
-
-    # def receive_message_from_server(self, so):
-    #     while True:
-    #         buffer = so.recv(256)
-    #         if not buffer:
-    #             break
-    #         message = buffer.decode('utf-8')
-    #         # self.chat_transcript_area.insert('end', message + '\n')
-    #         # self.chat_transcript_area.yview(END)
-    #         if "joined" in message:
-    #             user = message.split(":")[1]
-    #             message = user + " has joined"
-    #             self.chat_transcript_area.insert('end', message + '\n')
-    #             self.chat_transcript_area.yview(END)
-    #         else:
-    #             self.chat_transcript_area.insert('end', message + '\n')
-    #             self.chat_transcript_area.yview(END)
-
-    #     so.close()
 
     def display_command_box(self):
         frame = Frame()
@@ -147,6 +106,19 @@ class GUI:
         if data == "/list all":
             self.client_socket.sendall(bytes("/list all", "utf8"))
             self.print_list()
+        if data == "/list all date":
+            self.client_socket.sendall(bytes("/list all date", "utf8"))
+
+            self.top = Toplevel()
+            self.top.title("Date")
+            self.entry_field = Entry(self.top) 
+            self.entry_field.grid(row = 1, column = 0, columnspan = 4)
+            send_button = Button(self.top, text = "Send",command = self.send_date)
+            send_button.grid(row = 2, column = 1)
+
+            quit_button = Button(self.top, text = "Quit", command = self.top.destroy)
+            quit_button.grid(row = 2, column = 2)
+
         if data == "/score":
             self.client_socket.sendall(bytes("/score", "utf8"))           
             self.top = Toplevel()
@@ -180,6 +152,7 @@ class GUI:
 
             quit_button = Button(self.top, text = "Quit", command = self.top.destroy)
             quit_button.grid(row = 2, column = 2)
+
 
         if data == "/clear":
             self.chat_transcript_area.delete(1.0,'end')
@@ -274,10 +247,8 @@ class GUI:
 
     def send_score(self):
         data = self.entry_field.get()
-        # self.client_socket.sendall(bytes("Match ID", "utf8"))
-        # time.sleep(0.2)
         self.client_socket.sendall(bytes(str(data), "utf8"))
-        msg = self.client_socket.recv(1024)
+        #msg = self.client_socket.recv(1024)
         
         #get the detail of that match from server
         data = ""
@@ -295,7 +266,28 @@ class GUI:
             self.chat_transcript_area.insert('end', l[i] + '\n')
 
         self.top.destroy()
+    def send_date(self):
+        data = self.entry_field.get()
+        self.client_socket.sendall(bytes(str(data), "utf8"))
 
+        data = ""
+        while True: 
+            msg = self.client_socket.recv(1024)
+            data_decode = msg.decode("utf8")
+            if data_decode == "Date not exist!":
+                self.chat_transcript_area.insert('end', "Input date not exist, please input another!\n")
+                break
+            if data_decode == "END":
+                break
+            data += data_decode
+        if data:
+            l = data.split("/")
+            self.chat_transcript_area.insert('end', "Time    / Team1    / Score   / Team2\n")
+            for i in range(len(l)): 
+                self.chat_transcript_area.insert('end', l[i] + '\n')
+            self.top.destroy()
+        else:
+            self.top.destroy()
 if __name__ == '__main__':
     root = Tk()
     gui = GUI(root)
