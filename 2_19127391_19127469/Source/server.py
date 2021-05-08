@@ -137,7 +137,7 @@ class Server:
                         for i in range(len(row)):
                             data += str(row[i]) + "   "
                         data += "/"
-                    self.client.sendall(bytes(data,"utf8")) 
+                        self.client.sendall(bytes(data,"utf8")) 
                     time.sleep(0.2) # to guarantee that the data is sending not too fast
                     self.client.sendall(bytes("END","utf8"))
                 if str_data == "/list all date":
