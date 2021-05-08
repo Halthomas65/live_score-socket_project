@@ -11,7 +11,7 @@ import socket as sk
 BUFSIZ = 1024
 SERVER = socket(AF_INET, SOCK_STREAM)
 #HOST = '127.0.0.1'
-HOST = '192.168.1.18'
+HOST = '192.168.1.21'
 PORT = 33000
 ADDR = (HOST, PORT)
 SERVER.bind(ADDR)

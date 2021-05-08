@@ -103,28 +103,28 @@ class GUI:
             self.root.destroy()
             self.client_socket.close()
             exit(0)              
-        if data == "/list all":
-            self.client_socket.sendall(bytes("/list all", "utf8"))
-            self.print_list()
-        if data == "/list all date":
-            self.client_socket.sendall(bytes("/list all date", "utf8"))
+        if data == "/list all": #liệt kê danh sách
+            self.client_socket.sendall(bytes("/list all", "utf8")) #Hàm gửi đến server chuỗi /list all được tách thành từng byte theo kiểu utf8
+            self.print_list() #In danh sách trận đấu nhận được từ server
+        if data == "/list all date": #liệt kê danh sách chọn theo ngày
+            self.client_socket.sendall(bytes("/list all date", "utf8")) #giống trên
 
-            self.top = Toplevel()
-            self.top.title("Date")
-            self.entry_field = Entry(self.top) 
-            self.entry_field.grid(row = 1, column = 0, columnspan = 4)
-            send_button = Button(self.top, text = "Send",command = self.send_date)
-            send_button.grid(row = 2, column = 1)
+            self.top = Toplevel() #Tạo một cái cửa sổ 
+            self.top.title("Date") #Tiêu đề cho cửa sổ
+            self.entry_field = Entry(self.top) #chỗ để nhập data
+            self.entry_field.grid(row = 1, column = 0, columnspan = 4) #tạo kích cỡ cho cái khung cửa sổ
+            send_button = Button(self.top, text = "Send",command = self.send_date) #tạo cái nút Send với khi bấm vào nút thì gọi hàm send_date
+            send_button.grid(row = 2, column = 1) #Tạo kích cỡ cho cái nút Send
 
-            quit_button = Button(self.top, text = "Quit", command = self.top.destroy)
+            quit_button = Button(self.top, text = "Quit", command = self.top.destroy) #như trên mà nút Quit 
             quit_button.grid(row = 2, column = 2)
 
         if data == "/score":
             self.client_socket.sendall(bytes("/score", "utf8"))           
             self.top = Toplevel()
             self.top.title("Score")
-            self.scrollbar = Scrollbar(self.top)
-            self.list_box = Listbox(self.top, height = 30, width = 55, yscrollcommand = self.scrollbar.set)
+            self.scrollbar = Scrollbar(self.top) #tạo thanh kéo
+            self.list_box = Listbox(self.top, height = 30, width = 55, yscrollcommand = self.scrollbar.set) #tạo cái khung để hiện thị
             self.scrollbar.grid(row = 0,column = 5,ipady = 90)
             self.list_box.grid(row = 0,column = 0,columnspan = 4)
 
@@ -230,7 +230,7 @@ class GUI:
         Button(self.crf,text = 'Register',bd = 3 ,fg = 'green',font = ('',15),padx=5,pady=5,command=self.new_user).grid()
         Button(self.crf,text = 'Go to Login',bd = 3 ,fg = 'blue', font = ('',15),padx=5,pady=5,command=self.log).grid(row=2,column=1)
 
-    def print_list(self):
+    def print_list(self): #
         data = ""
         while True: 
             msg = self.client_socket.recv(1024)
@@ -245,7 +245,7 @@ class GUI:
         for i in range(len(l)): 
             self.chat_transcript_area.insert('end', l[i] + '\n')
 
-    def send_score(self):
+    def send_score(self): #
         data = self.entry_field.get()
         self.client_socket.sendall(bytes(str(data), "utf8"))
         #msg = self.client_socket.recv(1024)
@@ -266,7 +266,7 @@ class GUI:
             self.chat_transcript_area.insert('end', l[i] + '\n')
 
         self.top.destroy()
-    def send_date(self):
+    def send_date(self): #
         data = self.entry_field.get()
         self.client_socket.sendall(bytes(str(data), "utf8"))
 
